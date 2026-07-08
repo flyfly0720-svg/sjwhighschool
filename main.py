@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import altair as alt
 
 # ----------------------------------------------------------------------------
 # 페이지 기본 설정
@@ -95,27 +95,30 @@ elif page == "📊 내신 선택과목":
         # 내림차순 정렬 (값이 큰 것이 위로)
         sorted_df = edited_df.sort_values("등급_또는_점수", ascending=False)
 
-        fig = px.bar(
-            sorted_df,
-            x="등급_또는_점수",
-            y="표시이름",
-            orientation="h",
-            text="등급_또는_점수",
-            color="등급_또는_점수",
-            color_continuous_scale="Sunset",
-        )
-        fig.update_layout(
-            yaxis=dict(categoryorder="total ascending"),  # 정렬된 순서대로 표시
-            xaxis_title="등급 / 점수",
-            yaxis_title="",
-            height=520,
-            coloraxis_showscale=False,
-            font=dict(size=16),
-            margin=dict(l=10, r=10, t=30, b=10),
-        )
-        fig.update_traces(textposition="outside")
+        order = sorted_df["표시이름"].tolist()  # 내림차순 순서 고정
 
-        st.plotly_chart(fig, use_container_width=True)
+        bar = (
+            alt.Chart(sorted_df)
+            .mark_bar(cornerRadiusEnd=6)
+            .encode(
+                x=alt.X("등급_또는_점수:Q", title="등급 / 점수"),
+                y=alt.Y("표시이름:N", sort=order, title=""),
+                color=alt.Color(
+                    "등급_또는_점수:Q",
+                    scale=alt.Scale(scheme="orangered"),
+                    legend=None,
+                ),
+                tooltip=["과목", "등급_또는_점수"],
+            )
+        )
+        text = bar.mark_text(align="left", dx=5, fontSize=14).encode(
+            text="등급_또는_점수:Q"
+        )
+        chart = (bar + text).properties(height=480).configure_axis(
+            labelFontSize=14, titleFontSize=14
+        )
+
+        st.altair_chart(chart, use_container_width=True)
 
         st.markdown("#### 🏆 요약")
         top = sorted_df.iloc[0]
