@@ -71,54 +71,70 @@ elif page == "소개 & 선생님":
         st.write("**물리** 민홍기 · **화학** 권기섭 · **생명** 최철수")
 
     st.markdown("---")
-    st.subheader("내신 등급 (오름차순 — 낮을수록 좋은 등급)")
+    st.subheader("과목별 내신 등급 (오름차순 — 낮을수록 좋은 등급)")
     st.write("아래 표의 값을 실제 등급으로 수정하면 표와 그래프가 함께 자동으로 다시 정렬돼요.")
 
+    subjects = [
+        "언어와 매체",
+        "확률과 통계",
+        "미적분2",
+        "물리학",
+        "화학",
+        "생명과학",
+        "여행지리",
+        "역사로 탐구하는 현대 세계",
+        "기후변화와 지속가능한 세계",
+        "윤리문제 탐구",
+    ]
     grade_df = pd.DataFrame(
-        {"학생": ["서재원", "지태오"], "합산_등급": [1.85, 1.25]}
+        {"과목": subjects, "과목내신": [1.0] * len(subjects)}
     )
     grade_df = st.data_editor(
         grade_df,
+        num_rows="dynamic",
         use_container_width=True,
         column_config={
-            "합산_등급": st.column_config.NumberColumn(
-                "합산 등급", min_value=0.0, max_value=9.0, step=0.01
+            "과목내신": st.column_config.NumberColumn(
+                "과목내신", min_value=0.0, max_value=9.0, step=0.1
             )
         },
         key="grade_editor",
     )
 
-    # 오름차순 정렬 (등급이 낮을수록 좋음 -> 가장 좋은 등급이 위로)
-    sorted_grade = grade_df.sort_values("합산_등급", ascending=True).reset_index(drop=True)
+    if grade_df.empty:
+        st.warning("표에 최소 1개 이상의 과목 데이터를 입력해주세요.")
+    else:
+        # 오름차순 정렬 (등급이 낮을수록 좋음 -> 가장 좋은 등급이 위로)
+        sorted_grade = grade_df.sort_values("과목내신", ascending=True).reset_index(drop=True)
 
-    col_table, col_chart = st.columns([1, 2])
-    with col_table:
-        st.write("**표 (오름차순)**")
-        st.dataframe(
-            sorted_grade[["학생", "합산_등급"]],
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    with col_chart:
-        order = sorted_grade["학생"].tolist()
-        bar = (
-            alt.Chart(sorted_grade)
-            .mark_bar(cornerRadiusEnd=6)
-            .encode(
-                x=alt.X("합산_등급:Q", title="합산 등급"),
-                y=alt.Y("학생:N", sort=order, title=""),
-                color=alt.Color(
-                    "합산_등급:Q", scale=alt.Scale(scheme="tealblues"), legend=None
-                ),
-                tooltip=["학생", "합산_등급"],
+        col_table, col_chart = st.columns([1, 2])
+        with col_table:
+            st.write("**표 (오름차순)**")
+            st.dataframe(
+                sorted_grade[["과목", "과목내신"]],
+                use_container_width=True,
+                hide_index=True,
             )
-        )
-        text = bar.mark_text(align="left", dx=5, fontSize=14).encode(text="합산_등급:Q")
-        chart = (bar + text).properties(height=220).configure_axis(
-            labelFontSize=14, titleFontSize=14
-        )
-        st.altair_chart(chart, use_container_width=True)
+
+        with col_chart:
+            order = sorted_grade["과목"].tolist()
+            bar = (
+                alt.Chart(sorted_grade)
+                .mark_bar(cornerRadiusEnd=6)
+                .encode(
+                    x=alt.X("과목내신:Q", title="과목내신"),
+                    y=alt.Y("과목:N", sort=order, title=""),
+                    color=alt.Color(
+                        "과목내신:Q", scale=alt.Scale(scheme="tealblues"), legend=None
+                    ),
+                    tooltip=["과목", "과목내신"],
+                )
+            )
+            text = bar.mark_text(align="left", dx=5, fontSize=14).encode(text="과목내신:Q")
+            chart = (bar + text).properties(height=340).configure_axis(
+                labelFontSize=14, titleFontSize=14
+            )
+            st.altair_chart(chart, use_container_width=True)
 
 # ============================================================================
 # 수학
